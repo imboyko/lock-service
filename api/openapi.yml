@@ -1,0 +1,107 @@
+openapi: '3.0.3'
+info:
+  title: 'API Lock Service'
+  version: '1.0'
+components:
+  schemas:
+    NewLockDTO:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+      required:
+        - username
+    LockInfoDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          description: 'Идентификатор блокировки'
+        timestamp:
+          type: string
+          format: date-time
+          description: 'Время установки блокировки'
+        username:
+          type: string
+          description: 'Пользователь, установивший блокировку'
+    ResponseDTO:
+      type: object
+      properties:
+        message:
+          type: string
+  responses:
+    InternalErrorResponse:
+      description: 'Внутренняя ошибка'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResponseDTO'
+paths:
+  /locks:
+    get:
+      summary: 'Список блокировок'
+      description: 'Возвращает список установленных блокировок'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LockInfoDTO'
+        '500':
+          description: 'Внутренняя ошибка'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDTO'
+  /locks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: 'Идентификатор блокировки'
+        schema:
+          type: string
+    get:
+      summary: 'Информация о блокировке'
+      description: 'Возвращает информацию об установленной блокировке (при ее наличии) или `410` если блокировка не установлена'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockInfoDTO'
+        '410':
+          description: 'Блокировка не установлена'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseDTO'
+        '500':
+          $ref: '#/components/responses/InternalErrorResponse'
+    put:
+      summary: 'Установка блокировки'
+      description: 'Устанавливает новую блокировку или обновляет существующую'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewLockDTO'
+      responses:
+        '204':
+          description: 'Блокировка установлена/обновлена'
+        '500':
+          $ref: '#/components/responses/InternalErrorResponse'
+    delete:
+      summary: 'Снятие блокировки'
+      description: 'Удаляет блокировку'
+      responses:
+        '204':
+          description: 'Блокировка снята'
+        '500':
+          $ref: '#/components/responses/InternalErrorResponse'
