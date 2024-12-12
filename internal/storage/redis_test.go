@@ -63,12 +63,17 @@ func TestGetters(t *testing.T) {
 		mock.HSet(key, "username", l.Username)
 	}
 
-	t.Run("GetById", func(t *testing.T) {
+	t.Run("GetById Found", func(t *testing.T) {
 		exp := testSet[0]
 		res, err := stor.GetById(context.Background(), exp.Id)
 		if assert.NoError(t, err) {
 			assert.Equal(t, exp, res)
 		}
+	})
+
+	t.Run("GetById NoFound", func(t *testing.T) {
+		_, err := stor.GetById(context.Background(), "0")
+		assert.ErrorIs(t, err, storage.ErrNotFound)
 	})
 
 	t.Run("GetAll", func(t *testing.T) {
@@ -80,6 +85,19 @@ func TestGetters(t *testing.T) {
 }
 
 func TestDeleteById(t *testing.T) {
+	mock, stor, _ := createStorage(t)
+	t.Cleanup(mock.Close)
+
+	l := models.Lock{
+		Id:        "666",
+		Username:  "User 1",
+		Timestamp: time.Now().Round(time.Second),
+	}
+	err := stor.Save(context.Background(), l)
+	assert.NoError(t, err)
+}
+
+func TestSave(t *testing.T) {
 	mock, stor, _ := createStorage(t)
 	t.Cleanup(mock.Close)
 

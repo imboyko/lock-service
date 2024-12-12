@@ -76,12 +76,28 @@ func (s *RedisStorage) GetAll(ctx context.Context) ([]models.Lock, error) {
 // Возвращает значение ключа lock:id
 func (s *RedisStorage) GetById(ctx context.Context, id string) (models.Lock, error) {
 	var res models.Lock
-	if err := s.rdb.HGetAll(ctx, lockId(id).key()).Scan(&res); err != nil {
-		if err == redis.Nil {
-			return res, ErrNotFound
-		}
-		return res, fmt.Errorf("failed to get value: %w", err)
+
+	key := lockId(id).key()
+
+	tx := s.rdb.TxPipeline()
+	existsCmd := tx.Exists(ctx, lockId(id).key())
+	hgetallCmd := tx.HGetAll(ctx, key)
+
+	if _, err := tx.Exec(ctx); err != nil {
+		return res, fmt.Errorf("failed to exec transaction: %w", err)
 	}
+
+	exists, err := existsCmd.Result()
+	if err != nil {
+		return res, fmt.Errorf("failed to determine the key existing: %w", err)
+	} else if exists == 0 {
+		return res, ErrNotFound
+	}
+
+	if err := hgetallCmd.Scan(&res); err != nil {
+		return res, fmt.Errorf("failed to scan value: %w", err)
+	}
+
 	return res, nil
 }
 
@@ -95,11 +111,9 @@ func (s *RedisStorage) DeleteById(ctx context.Context, id string) error {
 func (s *RedisStorage) Save(ctx context.Context, l models.Lock) error {
 	key := lockId(l.Id).key()
 
-	p := s.rdb.Pipeline()
-	p.HSet(ctx, key, "id", l.Id)
-	p.HSet(ctx, key, "timestamp", l.Timestamp.Format(time.RFC3339))
-	p.HSet(ctx, key, "username", l.Username)
-	p.HExpire(ctx, key, s.ttl)
+	p := s.rdb.TxPipeline()
+	p.HSet(ctx, key, l)
+	p.Expire(ctx, key, s.ttl)
 
 	if _, err := p.Exec(ctx); err != nil {
 		return fmt.Errorf("failed to save: %w", err)
