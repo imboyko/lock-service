@@ -9,9 +9,9 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/imboyko/lock-service/internal/api"
 	"github.com/imboyko/lock-service/internal/config"
 	"github.com/imboyko/lock-service/internal/logger"
-	"github.com/imboyko/lock-service/internal/rest"
 	"github.com/imboyko/lock-service/internal/storage"
 )
 
@@ -31,7 +31,7 @@ func Run(runCtx context.Context) error {
 
 	log.Info("redis client connected", slog.String("redis.addr", cfg.Redis.Addr()))
 
-	controller := rest.NewRouter(stor)
+	controller := api.NewRouter(stor, log)
 
 	server := http.Server{
 		Addr:    ":8080",
