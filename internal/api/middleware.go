@@ -45,7 +45,7 @@ func AuthMiddleware(secret string) func(next http.Handler) http.Handler {
 			t, err := request.ParseFromRequest(r, request.BearerExtractor{}, keyFn, []request.ParseFromRequestOption{}...)
 			if err != nil {
 				log.Warn("authentification failed", logger.Error(err))
-				renderError(w, err.Error(), http.StatusUnauthorized)
+				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
 			}
 
