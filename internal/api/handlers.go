@@ -14,6 +14,10 @@ import (
 	"github.com/imboyko/lock-service/internal/storage/models"
 )
 
+type errorResponse struct {
+	Message string `json:"message"`
+}
+
 func HandleGetAll(s *storage.RedisStorage) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		oplog := logger.GetCtxLogger(r.Context())
@@ -25,7 +29,7 @@ func HandleGetAll(s *storage.RedisStorage) http.HandlerFunc {
 
 		if err := renderJson(w, locks); err != nil {
 			oplog.Error(err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			renderError(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
 }
@@ -49,7 +53,7 @@ func HandleGetById(s *storage.RedisStorage) http.HandlerFunc {
 
 		if err := renderJson(w, lock); err != nil {
 			oplog.Error(err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			renderError(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
 }
@@ -59,13 +63,18 @@ func HandlePutById(s *storage.RedisStorage) http.HandlerFunc {
 		defer r.Body.Close()
 
 		id := chi.URLParam(r, "id")
-		oplog := logger.GetCtxLogger(r.Context()).With(slog.String("lockId", id))
+		username := getUsernameCtx(r.Context())
 
-		l := models.Lock{Id: id, Timestamp: time.Now(), Username: "TODO Username"} // TODO lock.Username
+		oplog := logger.GetCtxLogger(r.Context()).With(
+			slog.String("lockId", id),
+			slog.String("username", username),
+		)
+
+		l := models.Lock{Id: id, Timestamp: time.Now(), Username: username}
 		err := s.Save(r.Context(), l)
 		if err != nil {
 			oplog.Error(err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			renderError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -78,12 +87,16 @@ func HandlePutById(s *storage.RedisStorage) http.HandlerFunc {
 func HandleDeleteById(s *storage.RedisStorage) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
-		oplog := logger.GetCtxLogger(r.Context()).With(slog.String("lockId", id))
+
+		oplog := logger.GetCtxLogger(r.Context()).With(
+			slog.String("lockId", id),
+			slog.String("username", getUsernameCtx(r.Context())),
+		)
 
 		err := s.DeleteById(r.Context(), id)
 		if err != nil {
 			oplog.Error(err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			renderError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -97,4 +110,9 @@ func renderJson[T any](w http.ResponseWriter, val T) error {
 	w.Header().Add("Content-Type", "application/json")
 
 	return json.NewEncoder(w).Encode(val)
+}
+
+func renderError(w http.ResponseWriter, message string, code int) error {
+	w.WriteHeader(code)
+	return renderJson(w, errorResponse{message})
 }

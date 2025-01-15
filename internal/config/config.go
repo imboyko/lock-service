@@ -16,6 +16,7 @@ func Load() (Config, error) {
 }
 
 type Config struct {
+	JwtSecret string `env:"JWT_SECRET" env-required:"true"`
 	Redis
 }
 

@@ -31,7 +31,7 @@ func Run(runCtx context.Context) error {
 
 	log.Info("redis client connected", slog.String("redis.addr", cfg.Redis.Addr()))
 
-	controller := api.NewRouter(stor, log)
+	controller := api.NewRouter(stor, log, cfg.JwtSecret)
 
 	server := http.Server{
 		Addr:    ":8080",

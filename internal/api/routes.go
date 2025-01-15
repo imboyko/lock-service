@@ -9,19 +9,20 @@ import (
 	"github.com/imboyko/lock-service/internal/storage"
 )
 
-func NewRouter(s *storage.RedisStorage, l *slog.Logger) http.Handler {
+func NewRouter(s *storage.RedisStorage, l *slog.Logger, jwtSecret string) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID, middleware.Recoverer, middleware.CleanPath, ContextLogger(l))
-
-	// TODO Bearer auth, inject username
 
 	r.Route("/locks", func(r chi.Router) {
 		r.Get("/", HandleGetAll(s))
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", HandleGetById(s))
-			r.Put("/", HandlePutById(s))
-			r.Delete("/", HandleDeleteById(s))
+			r.Group(func(r chi.Router) {
+				r.Use(AuthMiddleware(jwtSecret))
+				r.Put("/", HandlePutById(s))
+				r.Delete("/", HandleDeleteById(s))
+			})
 		})
 	})
 	return r
