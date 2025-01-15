@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/imboyko/lock-service/internal/config"
-	"github.com/imboyko/lock-service/internal/models"
 	"github.com/imboyko/lock-service/internal/storage"
+	"github.com/imboyko/lock-service/internal/storage/models"
 )
 
 func TestNewRedisStorage(t *testing.T) {

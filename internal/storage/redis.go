@@ -9,7 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/imboyko/lock-service/internal/config"
-	"github.com/imboyko/lock-service/internal/models"
+	"github.com/imboyko/lock-service/internal/storage/models"
 )
 
 var ErrNotFound = errors.New("lock not found")

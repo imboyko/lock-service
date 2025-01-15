@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/imboyko/lock-service/internal/models"
 	"github.com/imboyko/lock-service/internal/storage"
+	"github.com/imboyko/lock-service/internal/storage/models"
 )
 
 type getter interface {
