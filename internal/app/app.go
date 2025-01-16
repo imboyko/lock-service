@@ -29,6 +29,8 @@ func Run(runCtx context.Context) error {
 	}
 	defer stor.Close()
 
+	stor.SetTtl(cfg.LockTtl)
+
 	log.Info("redis client connected", slog.String("redis.addr", cfg.Redis.Addr()))
 
 	controller := api.NewRouter(stor, log, cfg.JwtSecret)

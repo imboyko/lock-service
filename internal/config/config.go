@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -16,7 +17,8 @@ func Load() (Config, error) {
 }
 
 type Config struct {
-	JwtSecret string `env:"JWT_SECRET" env-required:"true"`
+	JwtSecret string        `env:"JWT_SECRET" env-required:"true"`
+	LockTtl   time.Duration `env:"LOCK_TTL" env-default:"2m"`
 	Redis
 }
 

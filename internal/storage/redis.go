@@ -37,6 +37,11 @@ type RedisStorage struct {
 	ttl time.Duration
 }
 
+// Устанавливает время жизни блокировки
+func (s *RedisStorage) SetTtl(d time.Duration) {
+	s.ttl = d
+}
+
 // Вызывает Close() у redis.Client
 func (s *RedisStorage) Close() error {
 	return s.rdb.Close()
