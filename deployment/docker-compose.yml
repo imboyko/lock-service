@@ -1,0 +1,22 @@
+name: locker
+services:
+  redis:
+    image: redis
+    restart: always
+    deploy:
+      replicas: 1
+  backend:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+    environment:
+      - REDIS_HOST=redis
+      - LOCK_TTL=1m
+      - JWT_SECRET=my_secret_key
+    depends_on:
+      - redis
