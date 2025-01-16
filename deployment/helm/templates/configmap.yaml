@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helm.fullname" . }}
+  labels:
+    {{- include "helm.labels" . | nindent 4 }}
+data:
+  LOCK_TTL: "{{ .Values.LockTtl }}"
+  REDIS_HOST: "{{ required "Redis host is empty" .Values.Redis.Host}}"
+  REDIS_PORT: "{{ .Values.Redis.Port }}"
+  REDIS_DB: "{{ .Values.Redis.Db }}"
+  REDIS_USERNAME: "{{ .Values.Redis.Username }}"
